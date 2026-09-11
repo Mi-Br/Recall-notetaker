@@ -1,0 +1,23 @@
+[
+  {"participant": {"id": 100, "name": "Ada", "email": "ada@example.com", "is_host": true},
+   "words": [
+     {"text": "Morning", "start_timestamp": {"relative": 1.0}, "end_timestamp": {"relative": 1.4}},
+     {"text": "everyone.", "start_timestamp": {"relative": 1.4}, "end_timestamp": {"relative": 1.9}}
+   ]},
+  {"participant": {"id": 100, "name": "Ada", "email": "ada@example.com", "is_host": true},
+   "words": [
+     {"text": "Let's", "start_timestamp": {"relative": 2.3}, "end_timestamp": {"relative": 2.5}},
+     {"text": "start.", "start_timestamp": {"relative": 2.5}, "end_timestamp": {"relative": 2.9}}
+   ]},
+  {"participant": {"id": 101, "name": "Bob", "email": null, "is_host": false},
+   "words": [
+     {"text": "I'll", "start_timestamp": {"relative": 65.0}, "end_timestamp": {"relative": 65.2}},
+     {"text": "send", "start_timestamp": {"relative": 65.2}, "end_timestamp": {"relative": 65.4}},
+     {"text": "the", "start_timestamp": {"relative": 65.4}, "end_timestamp": {"relative": 65.5}},
+     {"text": "budget", "start_timestamp": {"relative": 65.5}, "end_timestamp": {"relative": 65.9}},
+     {"text": "Friday.", "start_timestamp": {"relative": 65.9}, "end_timestamp": {"relative": 66.4}}
+   ]},
+  {"participant": {"id": 100, "name": "Ada"}, "words": []},
+  {"participant": {"id": 100, "name": "Ada"},
+   "words": [{"text": "Thanks.", "start_timestamp": {"relative": 70.0}, "end_timestamp": {"relative": 70.5}}]}
+]

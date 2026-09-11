@@ -1,0 +1,12 @@
+{
+  "_comment": "Recall.ai MCP for Claude Code (read-only: list/retrieve bots, bot logs, docs search). Copy to .mcp.json (git-ignored). Confirm the exact URL and header at https://docs.recall.ai/docs/docs-mcp — it could not be verified when this template was written.",
+  "mcpServers": {
+    "recall": {
+      "type": "http",
+      "url": "https://us-west-2.recall.ai/mcp",
+      "headers": {
+        "Authorization": "Bearer ${RECALL_MCP_API_KEY}"
+      }
+    }
+  }
+}

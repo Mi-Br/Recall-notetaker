@@ -1,0 +1,15 @@
+# secrets / local state
+.env
+.mcp.json
+state/
+notes/
+*.transcript.json
+
+# python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+build/
+dist/
+.pytest_cache/
