@@ -3,13 +3,15 @@
   "displayName": "Recall Notetaker",
   "description": "Send a Recall.ai bot to a Google Meet, then turn the transcript into refined meeting notes inside Claude Code.",
   "version": "0.1.0",
-  "author": { "name": "Michail Bredichin" },
+  "author": {
+    "name": "Michail Bredichin"
+  },
   "homepage": "https://github.com/Mi-Br/Recall-notetaker",
   "userConfig": {
     "recall_api_key": {
       "type": "string",
       "title": "Recall.ai API key",
-      "description": "From the Recall.ai dashboard → API keys.",
+      "description": "From the Recall.ai dashboard \u2192 API keys.",
       "sensitive": true
     },
     "recall_region": {
@@ -34,15 +36,18 @@
   },
   "mcpServers": {
     "notetaker": {
-      "command": "uv",
-      "args": ["run", "--directory", "${CLAUDE_PLUGIN_ROOT}", "notetaker-mcp"],
+      "command": "bash",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/scripts/launch-mcp.sh"
+      ],
       "env": {
         "RECALL_API_KEY": "${user_config.recall_api_key}",
         "RECALL_REGION": "${user_config.recall_region}",
         "BOT_NAME": "${user_config.bot_name}",
         "ANTHROPIC_API_KEY": "${user_config.anthropic_api_key}",
         "NOTES_DIR": "${CLAUDE_PLUGIN_DATA}/notes",
-        "STATE_FILE": "${CLAUDE_PLUGIN_DATA}/state/bots.json"
+        "STATE_FILE": "${CLAUDE_PLUGIN_DATA}/state/bots.json",
+        "CLAUDE_PLUGIN_DATA": "${CLAUDE_PLUGIN_DATA}"
       },
       "timeout": 600000
     }

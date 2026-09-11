@@ -41,6 +41,18 @@ notetaker cancel <bot-id>                          # delete a scheduled bot
 Transcript provider is `--provider recallai_async` by default; `meeting_captions` is the
 free option (needs captions on in Meet), `recallai_streaming` is for live use.
 
+## Prerequisites
+
+| Need | Why | Check |
+|---|---|---|
+| **`uv`** (recommended) or **Python 3.10+** | runs the MCP server. With `uv` the plugin manages its own environment; without it the launcher builds a venv on first start (~30 s, needs network). | `uv --version` / `python3 --version` |
+| Git credentials for this private repo | `/plugin marketplace add` clones it | `git ls-remote https://github.com/Mi-Br/Recall-notetaker.git` |
+| Recall.ai API key + its region | the bot | Recall dashboard → API keys |
+
+Install `uv` with `curl -LsSf https://astral.sh/uv/install.sh | sh` or `brew install uv`, then **fully restart
+Claude Code** so the new PATH is picked up. The plugin checks for a runtime at session start and
+tells you what is missing; `/notetaker:doctor` runs the same check on demand.
+
 ## Use it from Claude Code (plugin)
 
 The repo is also a Claude Code plugin: an MCP server exposing the notetaker as tools, plus
@@ -67,11 +79,22 @@ notes are written by the session itself, so **no Anthropic API key is needed**; 
 uses the API only when one is configured (headless use).
 
 Notes and state live in the plugin data dir (`~/.claude/plugins/data/…/notes`) unless you ask
-Claude to save them into your project (`save_notes(..., output_dir=...)`). Requires `uv` on
-PATH (the server runs as `uv run --directory <plugin> notetaker-mcp`).
+Claude to save them into your project (`save_notes(..., output_dir=...)`). The server is started by
+`scripts/launch-mcp.sh`, which prefers `uv` and falls back to a plain Python venv.
 
 Local development: `claude --plugin-dir /path/to/Recall-notetaker`, then `/reload-plugins`
 after edits.
+
+### Troubleshooting
+
+| Symptom | Fix |
+|---|---|
+| `/mcp` shows **notetaker: failed** | `/notetaker:doctor`. Usually `uv`/Python missing or not on PATH → install, then restart Claude Code (not just a new session). Logs: `/mcp` → notetaker → view logs; lines start with `[notetaker]`. |
+| Tool returns **401** | wrong Recall key → `/plugin` → notetaker → configure. |
+| Tool returns **403** / connection error | wrong region. Run `RECALL_API_KEY=… bash scripts/doctor.sh --probe` in a terminal; it prints which region accepts the key. |
+| Bot stuck in `in_waiting_room` | click **Admit** in Google Meet; only the host/co-hosts can when Host Controls are on. |
+| Transcript empty | bot was never admitted, or `meeting_captions` provider with captions off. |
+| `marketplace add` fails with a **git BUG** or "source differs" | `rm -rf ~/.claude/plugins/marketplaces/Mi-Br-Recall-notetaker`, `/plugin marketplace remove recall-notetaker`, retry. Or skip the marketplace: clone anywhere and use `claude --plugin-dir`. |
 
 ## How it works
 
