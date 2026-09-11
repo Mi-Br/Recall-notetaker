@@ -12,6 +12,7 @@ dependencies = [
     "anthropic>=0.50",
     "pydantic>=2.6",
     "python-dotenv>=1.0",
+    "mcp>=2.0",
 ]
 
 [project.optional-dependencies]
@@ -19,6 +20,7 @@ dev = ["pytest>=8"]
 
 [project.scripts]
 notetaker = "recall_notetaker.cli:main"
+notetaker-mcp = "recall_notetaker.mcp_server:main"
 
 [tool.setuptools.packages.find]
 include = ["recall_notetaker*"]

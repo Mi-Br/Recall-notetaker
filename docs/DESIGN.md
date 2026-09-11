@@ -74,12 +74,18 @@ Recall's *Build with AI Agents* page offers (a) ready‑made prompts for coding 
 search docs. It **cannot create a bot**, so Claude + MCP alone can't "start the recording".
 That is the job of *this* project's code.
 
-So Claude plays two separate roles:
+So Claude plays three separate roles:
 
 1. **Build/debug time**: Claude Code with the Recall MCP attached (docs search, inspect a
-   bot that failed). Configured via `.mcp.json` (template committed, key from env).
-2. **Run time**: the Claude *API* summarises transcripts into notes. No MCP involved;
-   plain `anthropic` SDK call inside our service.
+   bot that failed). Template in `.mcp.json.example`, key from env.
+2. **Interactive use**: *this repo is itself a Claude Code plugin* (`.claude-plugin/`,
+   `skills/`, `recall_notetaker/mcp_server.py`). Our own MCP server exposes
+   `join_meeting`, `wait_for_bot`, `get_transcript`, `save_notes`, … and the
+   `/notetaker:meet` skill drives the flow. The Claude session writes and **refines** the
+   notes itself (evidence check against timestamps, owner merge, clarifying questions),
+   so no Anthropic API key is required for this path.
+3. **Headless run time** (phase 2 cron): the Claude *API* summarises transcripts into
+   notes via `notes.py`. Plain `anthropic` SDK call, structured output.
 
 ### 2.5 Receiving results: webhooks vs polling
 
@@ -109,7 +115,7 @@ when the service is hosted.
                      notes/YYYY-MM-DD-<title>.md   (+ raw transcript JSON)
 ```
 
-### Phase 1 — ad hoc CLI (in this repo now)
+### Phase 1 — ad hoc CLI + Claude Code plugin (in this repo now)
 
 ```
 notetaker join https://meet.google.com/abc-defg-hij --name "Michail's Notetaker"

@@ -1,0 +1,11 @@
+{
+  "name": "recall-notetaker",
+  "owner": { "name": "Mi-Br" },
+  "plugins": [
+    {
+      "name": "notetaker",
+      "source": "./",
+      "description": "Recall.ai meeting bot + refined notes for Google Meet, driven from Claude Code."
+    }
+  ]
+}

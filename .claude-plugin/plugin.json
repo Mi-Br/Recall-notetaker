@@ -1,0 +1,50 @@
+{
+  "name": "notetaker",
+  "displayName": "Recall Notetaker",
+  "description": "Send a Recall.ai bot to a Google Meet, then turn the transcript into refined meeting notes inside Claude Code.",
+  "version": "0.1.0",
+  "author": { "name": "Michail Bredichin" },
+  "homepage": "https://github.com/Mi-Br/Recall-notetaker",
+  "userConfig": {
+    "recall_api_key": {
+      "type": "string",
+      "title": "Recall.ai API key",
+      "description": "From the Recall.ai dashboard → API keys.",
+      "sensitive": true
+    },
+    "recall_region": {
+      "type": "string",
+      "title": "Recall.ai region",
+      "description": "Region the key belongs to: us-east-1, us-west-2, eu-central-1 or ap-northeast-1.",
+      "default": "us-west-2"
+    },
+    "bot_name": {
+      "type": "string",
+      "title": "Bot display name",
+      "description": "Shown to other participants in the meeting.",
+      "default": "Michail's Notetaker"
+    },
+    "anthropic_api_key": {
+      "type": "string",
+      "title": "Anthropic API key (optional)",
+      "description": "Only needed for the draft_notes tool / headless use. Inside Claude Code the notes are written by the session itself.",
+      "sensitive": true,
+      "default": ""
+    }
+  },
+  "mcpServers": {
+    "notetaker": {
+      "command": "uv",
+      "args": ["run", "--directory", "${CLAUDE_PLUGIN_ROOT}", "notetaker-mcp"],
+      "env": {
+        "RECALL_API_KEY": "${user_config.recall_api_key}",
+        "RECALL_REGION": "${user_config.recall_region}",
+        "BOT_NAME": "${user_config.bot_name}",
+        "ANTHROPIC_API_KEY": "${user_config.anthropic_api_key}",
+        "NOTES_DIR": "${CLAUDE_PLUGIN_DATA}/notes",
+        "STATE_FILE": "${CLAUDE_PLUGIN_DATA}/state/bots.json"
+      },
+      "timeout": 600000
+    }
+  }
+}

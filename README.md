@@ -41,6 +41,38 @@ notetaker cancel <bot-id>                          # delete a scheduled bot
 Transcript provider is `--provider recallai_async` by default; `meeting_captions` is the
 free option (needs captions on in Meet), `recallai_streaming` is for live use.
 
+## Use it from Claude Code (plugin)
+
+The repo is also a Claude Code plugin: an MCP server exposing the notetaker as tools, plus
+two skills that drive the workflow and do a refinement pass on the notes.
+
+```
+/plugin marketplace add Mi-Br/Recall-notetaker      # private repo: uses your git credentials
+/plugin install notetaker@recall-notetaker          # prompts for Recall key, region, bot name
+```
+
+Then, in any Claude Code session:
+
+```
+/notetaker:meet https://meet.google.com/abc-defg-hij Weekly sync
+   → bot joins (admit it), Claude waits, reads the transcript, drafts notes,
+     verifies every decision/action item against the transcript, asks you ≤3
+     clarifying questions, saves the final notes and answers follow-ups.
+/notetaker:finish [bot-id]                          # write up a call that already ended
+```
+
+Tools available to Claude: `join_meeting`, `schedule_meeting`, `bot_status`, `wait_for_bot`,
+`get_transcript`, `draft_notes`, `save_notes`, `list_bots`, `cancel_bot`. Inside Claude Code the
+notes are written by the session itself, so **no Anthropic API key is needed**; `draft_notes`
+uses the API only when one is configured (headless use).
+
+Notes and state live in the plugin data dir (`~/.claude/plugins/data/…/notes`) unless you ask
+Claude to save them into your project (`save_notes(..., output_dir=...)`). Requires `uv` on
+PATH (the server runs as `uv run --directory <plugin> notetaker-mcp`).
+
+Local development: `claude --plugin-dir /path/to/Recall-notetaker`, then `/reload-plugins`
+after edits.
+
 ## How it works
 
 ```
@@ -66,7 +98,7 @@ Claude Code — copy `.mcp.json.example` to `.mcp.json` and export `RECALL_MCP_A
 
 ## Roadmap
 
-1. ✅ Ad hoc CLI (this)
+1. ✅ Ad hoc CLI + Claude Code plugin (MCP server + skills)
 2. Auto‑join from my Google Calendar (own scheduler + `join_at`, GitHub Actions cron) — see DESIGN §3
 3. Signed‑in bot for auto‑admission; Notion / email sinks; live mode
 
