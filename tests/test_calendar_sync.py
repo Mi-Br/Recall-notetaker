@@ -128,3 +128,18 @@ def test_flat_events_and_dry_run():
     assert [c["event_id"] for c in r.created] == ["f1"] and not fake.bots
     assert any(s["event_id"] == "naive" for s in r.skipped)
     assert not any(c.startswith("POST") for c in fake.calls)
+
+
+def test_connector_event_format():
+    """Shape returned by Claude's Google Calendar connector (seen live 2026-10-10)."""
+    fake = FakeRecall()
+    ev = {"id": "c1", "summary": "Client", "start": {"dateTime": iso(3), "timeZone": "Europe/Amsterdam"},
+          "conferenceData": {"solutionName": "Google Meet", "videoEntryPoint": {"uri": "https://meet.google.com/hge-ghmm-uod"}},
+          "conferenceUrl": "https://meet.google.com/hge-ghmm-uod", "status": "confirmed"}
+    only_video = {k: v for k, v in ev.items() if k != "conferenceUrl"} | {"id": "c2", "start": {"dateTime": iso(4)},
+                  "conferenceData": {"videoEntryPoint": {"uri": "https://meet.google.com/aaa-bbbb-ccc"}}}
+    # private event shared as free/busy only: no title, no link
+    busy = {"id": "b1", "start": {"dateTime": iso(5)}, "status": "confirmed", "visibility": "private"}
+    r = sync(fake.client(), {"personal": [ev, only_video], "werkzet": [busy]}, now=NOW)
+    assert sorted(c["event_id"] for c in r.created) == ["c1", "c2"]
+    assert any(s["event_id"] == "b1" and "no video meeting link" in s["reason"] for s in r.skipped)

@@ -77,12 +77,18 @@ def _parse_dt(value: Any) -> datetime | None:
 
 
 def _find_url(event: dict[str, Any]) -> str | None:
-    for key in ("meeting_url", "hangoutLink", "hangout_link"):
+    for key in ("meeting_url", "hangoutLink", "hangout_link", "conferenceUrl", "conference_url"):
         if event.get(key):
             m = MEETING_URL.search(str(event[key]))
             if m:
                 return m.group(0)
-    for ep in ((event.get("conferenceData") or {}).get("entryPoints") or []):
+    conf = event.get("conferenceData") or {}
+    video = (conf.get("videoEntryPoint") or {}).get("uri")  # Claude's Google Calendar connector
+    if video:
+        m = MEETING_URL.search(video)
+        if m:
+            return m.group(0)
+    for ep in (conf.get("entryPoints") or []):
         if ep.get("entryPointType") == "video" and ep.get("uri"):
             m = MEETING_URL.search(ep["uri"])
             if m:

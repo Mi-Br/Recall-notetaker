@@ -15,14 +15,16 @@ with a short report.
 2. Choose which to read:
    - if the environment variable `SYNC_CALENDARS` is set, read exactly those (comma-separated
      calendar names or ids, matched case-insensitively);
-   - otherwise read the user's own calendars and any calendar shared with them by
-     michailbredichin@gmail.com or a werkzet address, and skip holidays, birthdays, contacts
-     and other public/read-only feeds.
+   - otherwise read `michailbredichin@gmail.com` (key `personal`) and `michail@werkzet.com`
+     (key `werkzet`), and skip Todoist, Family, holidays, birthdays and other feeds.
 3. For each chosen calendar, list events from now until 30 hours from now with recurring
    events expanded into single instances. Keep each event's id, summary, start (dateTime
    with offset, or date for all-day), end, hangoutLink, conferenceData, location,
    description, status and attendees (with the `self` flag and responseStatus).
-4. If a calendar fails to load, leave it out of the file and mention it in the report.
+4. If the connector reports `accessRole: freeBusyReader` for a calendar, its events have no
+   titles or meeting links, so nothing on it can be booked. Still include it, but say in the
+   report that the calendar is shared as free/busy only and needs "See all event details".
+5. If a calendar fails to load, leave it out of the file and mention it in the report.
    Never send an empty list for a calendar you could not read: an empty list cancels its
    bookings.
 
