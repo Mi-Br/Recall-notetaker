@@ -44,7 +44,8 @@ fi
 say "notetaker doctor"
 say "plugin root : $ROOT"
 say "data dir    : ${CLAUDE_PLUGIN_DATA:-<unset - CLI mode, defaults to ./notes and ./state>}"
-report_runtime || problems=1
+runtime_ok=1
+report_runtime || { problems=1; runtime_ok=0; }
 
 if command -v git >/dev/null 2>&1; then
   say "ok    git: $(git --version 2>&1)"
@@ -55,8 +56,29 @@ fi
 if [ -n "${RECALL_API_KEY:-}" ]; then
   say "ok    RECALL_API_KEY is set (${#RECALL_API_KEY} chars); region=${RECALL_REGION:-unset}"
 else
-  say "note  RECALL_API_KEY not visible to this shell. Inside the plugin it is injected from the install prompt;"
-  say "      to verify the key ask Claude to call the notetaker list_bots tool."
+  if [ "${CLAUDE_CODE_REMOTE:-}" = "true" ]; then
+    say "FAIL  RECALL_API_KEY is not set in this cloud session. Add it in the environment settings"
+    say "      (network secret or environment variable), then start a NEW session."
+    problems=1
+  else
+    say "note  RECALL_API_KEY not visible to this shell. With the plugin it is injected from the install prompt;"
+    say "      to verify the key ask Claude to call the notetaker list_bots tool."
+  fi
+fi
+
+if [ "${CLAUDE_CODE_REMOTE:-}" = "true" ] && command -v curl >/dev/null 2>&1; then
+  reachable=""
+  for r in us-east-1 us-west-2 eu-central-1 ap-northeast-1; do
+    code="$(curl -s -o /dev/null -w '%{http_code}' -m 8 "https://$r.recall.ai/api/v1/bot/?limit=1" 2>/dev/null)"
+    case "$code" in 000|"") ;; *) reachable="$reachable $r";; esac
+  done
+  if [ -n "$reachable" ]; then
+    say "ok    Recall reachable from this cloud session:$reachable"
+  else
+    say "FAIL  no Recall host is reachable: the environment's network policy blocks it. Add your region"
+    say "      host (e.g. us-west-2.recall.ai) under Allowed domains, then start a NEW session."
+    problems=1
+  fi
 fi
 
 if [ "$MODE" = "--probe" ] && [ -n "${RECALL_API_KEY:-}" ] && command -v curl >/dev/null 2>&1; then
@@ -70,8 +92,10 @@ if [ "$MODE" = "--probe" ] && [ -n "${RECALL_API_KEY:-}" ] && command -v curl >/
 fi
 
 if [ "$problems" -ne 0 ]; then
-  say ""
-  print_install_help 2>&1
+  if [ "$runtime_ok" -eq 0 ]; then
+    say ""
+    print_install_help 2>&1
+  fi
   exit 1
 fi
-say "all good - run /notetaker:meet <meet-url> to test with a real call."
+say "all good - run the meet command (/notetaker:meet with the plugin, /meet in this repo) to test with a real call."
