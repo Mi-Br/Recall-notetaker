@@ -36,10 +36,19 @@ Draft the notes yourself from the transcript (do **not** call `draft_notes` unle
 ## Key points         (bullets, most important first, no filler)
 ## Decisions          (each with a `[mm:ss]` timestamp from the transcript)
 ## Action items       (- [ ] **Owner** — task (due …) `[mm:ss]`)
+## Requests to Angela (instructions addressed to the notetaker by name; omit if none)
 ## My follow-ups      (what the user personally promised or must do)
 ## Open questions
 ## Talk time          (from the stats header of get_transcript)
 ```
+
+**"Angela" means "this is for you."** The bot is called Angela. Whenever a speaker addresses
+Angela by name (e.g. "Angela, note that…", "Angela, remind me…", "Angela, make a list of…"),
+treat what follows as an instruction to you, the notetaker. List each one under
+"Requests to Angela" with its timestamp, and carry it out in the notes where you can
+(add the item, build the list, highlight the point). If it needs something you cannot do from
+the notes alone, say so in that section. Transcription may spell the name differently
+("Angie", "Andjela"); judge by context.
 
 ## 4. Refinement pass (this is what makes the notes good)
 
