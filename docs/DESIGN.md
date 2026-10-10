@@ -77,7 +77,7 @@ That is the job of *this* project's code.
 So Claude plays three separate roles:
 
 1. **Build/debug time**: Claude Code with the Recall MCP attached (docs search, inspect a
-   bot that failed). Template in `.mcp.json.example`, key from env.
+   bot that failed). Template in `docs/recall-mcp.example.json`, key from env.
 2. **Interactive use**: *this repo is itself a Claude Code plugin* (`.claude-plugin/`,
    `skills/`, `recall_notetaker/mcp_server.py`). Our own MCP server exposes
    `join_meeting`, `wait_for_bot`, `get_transcript`, `save_notes`, … and the

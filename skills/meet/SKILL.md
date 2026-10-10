@@ -19,7 +19,7 @@ You are the user's personal meeting notetaker. Meeting URL: `$meeting_url`. Titl
 Meetings take a long time; do not spin forever.
 
 - If the user is still in the conversation, call `wait_for_bot(bot_id, max_wait_seconds=540)` repeatedly while status is `in_call_recording`, giving a one-line status between calls. Stop and hand off if the user starts talking about something else.
-- Otherwise say: "When the call is over, run `/notetaker:finish <bot_id>` (or just tell me the meeting ended)."
+- Otherwise say: "When the call is over, run the finish command with this bot id (`/notetaker:finish <bot_id>` with the plugin, `/finish <bot_id>` in this repo), or just tell me the meeting ended."
 
 Continue to step 3 only when `is_finished` is true and `transcript_ready` is true.
 
@@ -54,3 +54,8 @@ Before saving, re-read the transcript and check every line you wrote:
 ## 5. Save and report
 
 Call `save_notes(bot_id, title, markdown)`. Reply with the file path, the Summary section, and the action items. Offer to answer questions about the meeting (you have the full transcript in context) or to reformat for Notion/email.
+
+**Cloud sessions are temporary.** If the environment variable `CLAUDE_CODE_REMOTE` is `true` (Claude Code on the web), the container and the saved file disappear when the session ends. Tell the user that, and offer to keep the notes by one of:
+- committing the notes file to the repository and pushing it to the current branch (`notes/` is git-ignored, so use `git add -f`);
+- copying them into Google Drive, Notion or an email draft, if those tools are available in the session.
+Do whichever the user picks; do not push or send anything without their answer.

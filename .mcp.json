@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "notetaker": {
+      "command": "bash",
+      "args": ["${CLAUDE_PROJECT_DIR:-.}/scripts/launch-mcp.sh"],
+      "env": {
+        "NOTES_DIR": "${CLAUDE_PROJECT_DIR:-.}/notes",
+        "STATE_FILE": "${CLAUDE_PROJECT_DIR:-.}/state/bots.json"
+      }
+    }
+  }
+}

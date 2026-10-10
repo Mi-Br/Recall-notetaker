@@ -127,4 +127,4 @@ Status codes (from the `bot.status_change` webhook list): `joining_call`, `in_wa
 
 Read‑only tools: list bots (by time window/status/metadata), retrieve bot, bot logs,
 list workspaces, search/get docs. Auth: OAuth (interactive) or a scoped MCP API key sent as
-a Bearer token to the regional endpoint. Cannot create bots. Template in `.mcp.json.example` ⚠.
+a Bearer token to the regional endpoint. Cannot create bots. Template in `docs/recall-mcp.example.json` ⚠.

@@ -1,6 +1,6 @@
 # secrets / local state
 .env
-.mcp.json
+
 state/
 notes/
 *.transcript.json

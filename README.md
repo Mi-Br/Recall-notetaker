@@ -53,6 +53,34 @@ Install `uv` with `curl -LsSf https://astral.sh/uv/install.sh | sh` or `brew ins
 Claude Code** so the new PATH is picked up. The plugin checks for a runtime at session start and
 tells you what is missing; `/notetaker:doctor` runs the same check on demand.
 
+## Use it from Claude Code on the web (any PC, no install)
+
+A session opened on this repo at claude.ai/code picks up the notetaker server from `.mcp.json`
+and the commands from `.claude/skills/`. Nothing runs on your computer, so the operating system
+doesn't matter. One-time setup in the cloud environment's settings (environment menu in the
+session title bar → Edit):
+
+1. **Network access:** add your Recall region host under Allowed domains, e.g.
+   `us-west-2.recall.ai`. Keep "allow package managers" ticked; the server installs its Python
+   packages from PyPI on first start.
+2. **Secret:** add your Recall key as a network secret (or environment variable) named
+   `RECALL_API_KEY`. Never paste it into the chat.
+3. **Optional variables:** `RECALL_REGION` (default `us-west-2`), `BOT_NAME`.
+
+Then start a **new** session on this repo (settings only apply to new sessions) and run:
+
+```
+/notetaker-doctor                                   # checks runtime, key and network
+/meet https://meet.google.com/abc-defg-hij Weekly sync
+/finish [bot-id]                                    # write up a call that already ended
+```
+
+The container is deleted when the session ends, so the `meet` command offers to commit the notes
+to the repo or copy them to Google Drive, Notion or email before you leave.
+
+Project skills mirror the plugin skills. After editing anything under `skills/`, run
+`scripts/sync-project-skills.sh`; a test fails if the copies drift.
+
 ## Use it from Claude Code (plugin)
 
 The repo is also a Claude Code plugin: an MCP server exposing the notetaker as tools, plus
@@ -117,7 +145,7 @@ No public webhook endpoint is needed. `state/bots.json` remembers bots we create
 ```
 
 Recall's own MCP server (read‑only: bots, logs, docs) is handy while debugging with
-Claude Code — copy `.mcp.json.example` to `.mcp.json` and export `RECALL_MCP_API_KEY`.
+Claude Code — merge `docs/recall-mcp.example.json` into your MCP config and export `RECALL_MCP_API_KEY`.
 
 ## Roadmap
 
