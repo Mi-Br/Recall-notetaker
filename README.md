@@ -57,15 +57,19 @@ tells you what is missing; `/notetaker:doctor` runs the same check on demand.
 
 A session opened on this repo at claude.ai/code picks up the notetaker server from `.mcp.json`
 and the commands from `.claude/skills/`. Nothing runs on your computer, so the operating system
-doesn't matter. One-time setup in the cloud environment's settings (environment menu in the
-session title bar → Edit):
+doesn't matter. Set up a cloud environment once; every new session in it gets the key.
 
-1. **Network access:** add your Recall region host under Allowed domains, e.g.
-   `us-west-2.recall.ai`. Keep "allow package managers" ticked; the server installs its Python
-   packages from PyPI on first start.
-2. **Secret:** add your Recall key as a network secret (or environment variable) named
-   `RECALL_API_KEY`. Never paste it into the chat.
-3. **Optional variables:** `RECALL_REGION` (default `us-west-2`), `BOT_NAME`.
+1. **Create an environment.** Cloud icon above the message box → Cloud → Add cloud environment.
+   Name it e.g. `Recall notetaker`, keep network access on Trusted, and add the variables
+   `RECALL_REGION=eu-central-1` (your workspace's region) and `BOT_NAME=…`.
+2. **Add the key as a network secret.** The section only appears when *editing* an existing
+   environment: settings icon → Network secrets → Add secret. Allowed websites `*.recall.ai`,
+   header `Authorization`, prefix **`Token`** (not the default `Bearer`), value = your key.
+   The key never enters the session; the proxy adds it to requests for those hosts. Never paste it
+   into the chat. (Team/Enterprise plans have no network secrets: use an environment variable
+   `RECALL_API_KEY` instead, and add `eu-central-1.recall.ai` under Allowed domains.)
+3. **Start chats in that environment.** The selector remembers your last pick. With Claude Code
+   Projects, set Project settings → Environment once and every thread uses it.
 
 Then start a **new** session on this repo (settings only apply to new sessions) and run:
 

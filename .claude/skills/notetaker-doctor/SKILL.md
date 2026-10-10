@@ -14,9 +14,12 @@ Run the environment check and explain the result to the user in plain language.
 3. If the runtime is fine, verify the Recall connection by calling the `list_bots` tool:
    - success (even an empty list) → setup is complete;
    - "RECALL_API_KEY is not set" or HTTP 401 → the key is missing or wrong. Plugin: re-enter it via
-     `/plugin` → notetaker → configure. Cloud session: add it in the environment settings as a
-     network secret or environment variable named `RECALL_API_KEY`, then start a new session.
-     Never ask the user to paste the key into the chat;
+     `/plugin` → notetaker → configure. Cloud session: add a network secret on the environment
+     (allowed websites `*.recall.ai`, header `Authorization`, prefix `Token`, not `Bearer`), or an
+     environment variable `RECALL_API_KEY` on plans without network secrets, then start a new
+     session. Never ask the user to paste the key into the chat;
+   - doctor says RECALL_REGION does not match the key's region → set the environment variable
+     `RECALL_REGION` to the region it names and start a new session;
    - "network error" / ProxyError 403 in a cloud session → the environment's network policy blocks
      Recall. The user adds the region host (e.g. `us-west-2.recall.ai`) under Allowed domains in the
      environment settings, keeps package managers allowed, and starts a new session;

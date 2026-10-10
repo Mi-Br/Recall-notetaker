@@ -57,9 +57,8 @@ if [ -n "${RECALL_API_KEY:-}" ]; then
   say "ok    RECALL_API_KEY is set (${#RECALL_API_KEY} chars); region=${RECALL_REGION:-unset}"
 else
   if [ "${CLAUDE_CODE_REMOTE:-}" = "true" ]; then
-    say "FAIL  RECALL_API_KEY is not set in this cloud session. Add it in the environment settings"
-    say "      (network secret or environment variable), then start a NEW session."
-    problems=1
+    say "note  no RECALL_API_KEY variable: expecting a network secret (*.recall.ai, prefix Token);"
+    say "      the Recall check below shows whether it works."
   else
     say "note  RECALL_API_KEY not visible to this shell. With the plugin it is injected from the install prompt;"
     say "      to verify the key ask Claude to call the notetaker list_bots tool."
@@ -67,16 +66,31 @@ else
 fi
 
 if [ "${CLAUDE_CODE_REMOTE:-}" = "true" ] && command -v curl >/dev/null 2>&1; then
-  reachable=""
+  # Ask every region; a network secret (or RECALL_API_KEY) authenticates the request.
+  reachable=""; accepted=""
   for r in us-east-1 us-west-2 eu-central-1 ap-northeast-1; do
-    code="$(curl -s -o /dev/null -w '%{http_code}' -m 8 "https://$r.recall.ai/api/v1/bot/?limit=1" 2>/dev/null)"
+    if [ -n "${RECALL_API_KEY:-}" ]; then
+      code="$(curl -s -o /dev/null -w '%{http_code}' -m 8 -H "Authorization: Token $RECALL_API_KEY" "https://$r.recall.ai/api/v1/bot/?limit=1" 2>/dev/null)"
+    else
+      code="$(curl -s -o /dev/null -w '%{http_code}' -m 8 "https://$r.recall.ai/api/v1/bot/?limit=1" 2>/dev/null)"
+    fi
     case "$code" in 000|"") ;; *) reachable="$reachable $r";; esac
+    [ "$code" = "200" ] && accepted="$r"
   done
-  if [ -n "$reachable" ]; then
-    say "ok    Recall reachable from this cloud session:$reachable"
+  if [ -n "$accepted" ]; then
+    say "ok    Recall accepted the key; workspace region: $accepted"
+    if [ "${RECALL_REGION:-us-west-2}" != "$accepted" ]; then
+      say "FAIL  RECALL_REGION is '${RECALL_REGION:-unset, defaults to us-west-2}' but the key belongs to $accepted."
+      say "      Set the environment variable RECALL_REGION=$accepted and start a NEW session."
+      problems=1
+    fi
+  elif [ -n "$reachable" ]; then
+    say "FAIL  Recall is reachable but rejected every request: no key reached it. Check the network"
+    say "      secret: allowed websites *.recall.ai, header Authorization, prefix 'Token' (not Bearer)."
+    problems=1
   else
-    say "FAIL  no Recall host is reachable: the environment's network policy blocks it. Add your region"
-    say "      host (e.g. us-west-2.recall.ai) under Allowed domains, then start a NEW session."
+    say "FAIL  no Recall host is reachable: add a network secret for *.recall.ai (or allow your region"
+    say "      host, e.g. eu-central-1.recall.ai), then start a NEW session."
     problems=1
   fi
 fi
