@@ -143,3 +143,19 @@ def test_bot_image_env(monkeypatch, tmp_path):
     assert _bot_image() is None
     monkeypatch.setenv("BOT_IMAGE", str(tmp_path / "missing.jpg"))
     assert _bot_image() is None
+
+
+def test_output_image_posts_jpeg(tmp_path):
+    img = tmp_path / "a.jpg"
+    img.write_bytes(b"\xff\xd8\xff\xe0x")
+    seen = {}
+
+    def handler(request):
+        seen["path"] = request.url.path
+        seen["body"] = json.loads(request.content)
+        return httpx.Response(200, json={})
+
+    client = RecallClient(Settings(recall_api_key="k", bot_image=img), transport=httpx.MockTransport(handler))
+    client.output_image("bot-9")
+    assert seen["path"] == "/api/v1/bot/bot-9/output_video/"
+    assert seen["body"]["kind"] == "jpeg" and seen["body"]["b64_data"]

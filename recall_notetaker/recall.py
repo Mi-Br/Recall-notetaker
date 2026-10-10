@@ -202,6 +202,19 @@ class RecallClient:
             return data.get("results") or []
         return data or []
 
+    def output_image(self, bot_id: str, image_path: Any | None = None) -> dict[str, Any] | None:
+        """Show a JPEG as a live bot's camera feed right now (Output Video endpoint).
+
+        Fallback / diagnostic for automatic_video_output: Recall answers immediately and
+        returns an error if it rejects the image or the bot state.
+        """
+        from pathlib import Path
+        path = Path(image_path) if image_path else self.settings.bot_image
+        if path is None or not Path(path).is_file():
+            raise RecallError("no bot image configured (BOT_IMAGE or assets/bot-avatar.jpg)")
+        body = {"kind": "jpeg", "b64_data": base64.b64encode(Path(path).read_bytes()).decode("ascii")}
+        return self._request("POST", f"/api/v1/bot/{bot_id}/output_video/", json=body)
+
     def create_async_transcript(self, recording_id: str, language_code: str | None = None) -> dict[str, Any]:
         """Re-transcribe a finished recording (e.g. captions came back empty)."""
         body = {"provider": {"recallai_async": {

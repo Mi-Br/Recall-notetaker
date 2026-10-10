@@ -292,6 +292,18 @@ def _write_notes_file(bot_id: str, title: str, markdown: str, *, started: dateti
 
 @server.tool()
 @_surface_errors
+def show_image(bot_id: str) -> dict[str, Any]:
+    """Push the bot's avatar image to its camera feed now (bot must be in the call).
+
+    Use when participants see a letter instead of the avatar; Recall's reply or error
+    explains why the image was not shown.
+    """
+    reply = _c().output_image(bot_id)
+    return {"bot_id": bot_id, "shown": True, "recall_reply": reply}
+
+
+@server.tool()
+@_surface_errors
 def list_bots(limit: int = 10) -> list[dict[str, Any]]:
     """Recent bots in the Recall workspace with status, time and meeting URL."""
     out = []

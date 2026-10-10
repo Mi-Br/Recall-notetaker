@@ -8,6 +8,7 @@
   notetaker notes <bot-id>                (re)generate notes for a finished bot
   notetaker list                          recent bots
   notetaker cancel <bot-id>               delete a scheduled bot
+  notetaker show-image <bot-id>           push the avatar to a live bot's camera
 """
 
 from __future__ import annotations
@@ -150,6 +151,13 @@ def cmd_list(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_show_image(args: argparse.Namespace) -> int:
+    settings = Settings.from_env()
+    reply = RecallClient(settings).output_image(args.bot_id, args.image)
+    print(json.dumps(reply, indent=2) if reply else "ok (no body)")
+    return 0
+
+
 def cmd_cancel(args: argparse.Namespace) -> int:
     settings = Settings.from_env()
     RecallClient(settings).delete_bot(args.bot_id)
@@ -196,6 +204,11 @@ def build_parser() -> argparse.ArgumentParser:
     ls = sub.add_parser("list")
     ls.add_argument("--limit", type=int, default=20)
     ls.set_defaults(fn=cmd_list)
+
+    si = sub.add_parser("show-image", help="push the avatar to a live bot's camera now")
+    si.add_argument("bot_id")
+    si.add_argument("--image", help="path to a 1280x720 JPEG (default BOT_IMAGE / assets/bot-avatar.jpg)")
+    si.set_defaults(fn=cmd_show_image)
 
     c = sub.add_parser("cancel")
     c.add_argument("bot_id")
