@@ -236,6 +236,63 @@ def get_transcript(bot_id: str, include_stats: bool = True) -> str:
     return "\n".join(head) + render_text(paragraphs)
 
 
+def _format_transcript(bot: dict[str, Any], raw: list[dict[str, Any]], suffix: str, note: str = "") -> str:
+    paragraphs = to_paragraphs(to_segments(raw))
+    s = _s()
+    s.notes_dir.mkdir(parents=True, exist_ok=True)
+    started = _started_at(bot) or datetime.now(timezone.utc)
+    raw_path = s.notes_dir / f"{started.strftime('%Y-%m-%d-%H%M')}-{bot['id'][:8]}{suffix}.transcript.json"
+    raw_path.write_text(json.dumps(raw, indent=1, ensure_ascii=False))
+    if not paragraphs:
+        return "TRANSCRIPT IS EMPTY."
+    st = stats(paragraphs)
+    head = [f"Meeting: {BotSummary.from_api(bot).meeting_url}  Started: {started.isoformat()}  Duration: {fmt_ts(st.duration_ms)}",
+            "Speakers: " + ", ".join(f"{sp} ({fmt_ts(st.talk_time_ms[sp])}, {st.turns[sp]} turns)" for sp in speakers(paragraphs)),
+            f"Raw transcript saved to: {raw_path}"]
+    if note:
+        head.append(note)
+    return "\n".join(head) + "\n\n" + render_text(paragraphs)
+
+
+@server.tool()
+@_surface_errors
+def retranscribe(bot_id: str, language: str = "lt", transcript_id: str | None = None,
+                 max_wait_seconds: int = 300) -> str:
+    """Transcribe a finished meeting again, after the call, in a given language (default Lithuanian "lt").
+
+    Use when the live transcript is garbled or the meeting was not in English. Returns the
+    transcript in the same format as get_transcript. Long meetings may need more than one
+    call: if it says "still processing", call again with the transcript_id it gives.
+    """
+    bot = _c().get_bot(bot_id)
+    res = _c().retranscribe(bot, language, transcript_id=transcript_id, max_wait_seconds=min(max_wait_seconds, 540))
+    if res["words"] is None:
+        return json.dumps({"status": res["status"], "transcript_id": res["transcript_id"],
+                           "next": "still processing; call retranscribe again with this transcript_id"})
+    return _format_transcript(bot, res["words"], f".{language}", note=f"Language: {language} (post-call transcription)")
+
+
+@server.tool()
+@_surface_errors
+def download_recording(bot_id: str, output_dir: str | None = None) -> dict[str, Any]:
+    """Save the meeting's audio (mp3, when recorded) and video (mp4) files; returns their paths.
+
+    Recall keeps recordings for 7 days, so download anything you want to keep or send to
+    another speech-to-text model.
+    """
+    bot = _c().get_bot(bot_id)
+    urls = _c().media_urls(bot)
+    if not urls:
+        raise ToolError("no finished recording media for this bot yet")
+    started = _started_at(bot) or datetime.now(timezone.utc)
+    folder = Path(output_dir) if output_dir else _s().notes_dir
+    saved = {}
+    for ext, url in urls.items():
+        path = _c().download(url, folder / f"{started.strftime('%Y-%m-%d-%H%M')}-{bot_id[:8]}.{ext}")
+        saved[ext] = {"path": str(path), "mb": round(path.stat().st_size / 1e6, 2)}
+    return {"bot_id": bot_id, "files": saved}
+
+
 @server.tool()
 @_surface_errors
 def draft_notes(bot_id: str) -> str:

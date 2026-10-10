@@ -155,6 +155,7 @@ class RecallClient:
             "transcript": {"provider": provider_cfg},
             "participant_events": {},
             "meeting_metadata": {},
+            "audio_mixed_mp3": {},  # audio-only copy, e.g. for a Lithuanian speech-to-text model
             "start_recording_on": "participant_join",
         }
         if webhook_url:
@@ -214,6 +215,57 @@ class RecallClient:
             raise RecallError("no bot image configured (BOT_IMAGE or assets/bot-avatar.jpg)")
         body = {"kind": "jpeg", "b64_data": base64.b64encode(Path(path).read_bytes()).decode("ascii")}
         return self._request("POST", f"/api/v1/bot/{bot_id}/output_video/", json=body)
+
+    def media_urls(self, bot: dict[str, Any]) -> dict[str, str]:
+        """Download URLs of the finished recording: {"mp3": ..., "mp4": ...} (whichever exist)."""
+        out: dict[str, str] = {}
+        for rec in bot.get("recordings") or []:
+            ms = rec.get("media_shortcuts") or {}
+            for key, ext in (("audio_mixed", "mp3"), ("video_mixed", "mp4")):
+                url = ((ms.get(key) or {}).get("data") or {}).get("download_url")
+                if url and ext not in out:
+                    out[ext] = url
+        return out
+
+    def download(self, url: str, dest: Any) -> Any:
+        from pathlib import Path
+        dest = Path(dest)
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        with self._download.stream("GET", url) as resp:
+            resp.raise_for_status()
+            with dest.open("wb") as fh:
+                for chunk in resp.iter_bytes():
+                    fh.write(chunk)
+        return dest
+
+    def get_transcript_artifact(self, transcript_id: str) -> dict[str, Any]:
+        return self._request("GET", f"/api/v1/transcript/{transcript_id}/")
+
+    def retranscribe(self, bot: dict[str, Any], language_code: str, *, transcript_id: str | None = None,
+                     max_wait_seconds: float = 300, poll_seconds: float = 10,
+                     sleep: Callable[[float], None] = time.sleep) -> dict[str, Any]:
+        """Post-call transcription of the bot's recording in `language_code` (e.g. "lt").
+
+        Returns {"transcript_id", "status", "words"} where words is Recall's transcript JSON
+        once status is "done". Pass transcript_id to resume waiting on an earlier request.
+        """
+        if transcript_id is None:
+            recs = bot.get("recordings") or []
+            if not recs:
+                raise RecallError("this bot has no recording to transcribe")
+            transcript_id = self.create_async_transcript(recs[0]["id"], language_code)["id"]
+        deadline = time.monotonic() + max_wait_seconds
+        while True:
+            t = self.get_transcript_artifact(transcript_id)
+            status = (t.get("status") or {}).get("code")
+            if status == "done":
+                url = (t.get("data") or {}).get("download_url")
+                return {"transcript_id": transcript_id, "status": status, "words": self.download_json(url) if url else []}
+            if status == "failed":
+                raise RecallError(f"transcription failed: {t.get('status')}")
+            if time.monotonic() >= deadline:
+                return {"transcript_id": transcript_id, "status": status or "processing", "words": None}
+            sleep(poll_seconds)
 
     def create_async_transcript(self, recording_id: str, language_code: str | None = None) -> dict[str, Any]:
         """Re-transcribe a finished recording (e.g. captions came back empty)."""

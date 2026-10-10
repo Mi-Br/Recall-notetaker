@@ -159,3 +159,43 @@ def test_output_image_posts_jpeg(tmp_path):
     client.output_image("bot-9")
     assert seen["path"] == "/api/v1/bot/bot-9/output_video/"
     assert seen["body"]["kind"] == "jpeg" and seen["body"]["b64_data"]
+
+
+def test_bot_payload_records_mp3():
+    body = RecallClient(Settings(recall_api_key="k")).build_bot_payload("u")
+    assert body["recording_config"]["audio_mixed_mp3"] == {}
+
+
+def test_media_urls_and_retranscribe(bot_done_json, transcript_json, tmp_path):
+    bot = json.loads(json.dumps(bot_done_json))
+    bot["recordings"][0]["media_shortcuts"]["audio_mixed"] = {"data": {"download_url": "https://files.example.test/a.mp3"}}
+    bot["recordings"][0]["media_shortcuts"]["video_mixed"] = {"data": {"download_url": "https://files.example.test/v.mp4"}}
+    polls = {"n": 0}
+
+    def handler(request):
+        if request.url.host == "files.example.test":
+            if request.url.path.endswith(".json"):
+                return httpx.Response(200, json=transcript_json)
+            return httpx.Response(200, content=b"media-bytes")
+        if request.method == "POST" and request.url.path == "/api/v1/recording/rec-1/create_transcript/":
+            assert json.loads(request.content)["provider"]["recallai_async"]["language_code"] == "lt"
+            return httpx.Response(201, json={"id": "tr-9", "status": {"code": "processing"}})
+        if request.url.path == "/api/v1/transcript/tr-9/":
+            polls["n"] += 1
+            if polls["n"] < 2:
+                return httpx.Response(200, json={"id": "tr-9", "status": {"code": "processing"}})
+            return httpx.Response(200, json={"id": "tr-9", "status": {"code": "done"},
+                                             "data": {"download_url": "https://files.example.test/t.json"}})
+        return httpx.Response(404)
+
+    client = make_client(handler)
+    urls = client.media_urls(bot)
+    assert urls == {"mp3": "https://files.example.test/a.mp3", "mp4": "https://files.example.test/v.mp4"}
+    path = client.download(urls["mp3"], tmp_path / "x.mp3")
+    assert path.read_bytes() == b"media-bytes"
+    res = client.retranscribe(bot, "lt", poll_seconds=0, sleep=lambda s: None)
+    assert res["status"] == "done" and res["transcript_id"] == "tr-9" and len(res["words"]) == 5
+    # resume path: a timeout returns the id with words=None
+    polls["n"] = -5
+    pending = client.retranscribe(bot, "lt", transcript_id="tr-9", max_wait_seconds=0, sleep=lambda s: None)
+    assert pending == {"transcript_id": "tr-9", "status": "processing", "words": None}

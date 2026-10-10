@@ -27,6 +27,15 @@ Continue to step 3 only when `is_finished` is true and `transcript_ready` is tru
 
 Call `get_transcript(bot_id)`. If it says the transcript is empty, tell the user the likely cause and stop.
 
+**Language check.** The live transcript is English-only. If it reads as gibberish or
+fragments ("Sam. Of. Sa. Decker, vermont.") although people clearly talked, or the user says
+the meeting was in another language, call `retranscribe(bot_id, language="lt")` (Lithuanian;
+use `ru`, `nl`, … if that fits better) and use that transcript instead. Michail's meetings are
+often in Lithuanian. Write the notes in English unless the user asks otherwise, and quote
+short key phrases in the original language where the exact wording matters. If the
+retranscribed text is still poor, offer `download_recording(bot_id)` so the audio can go to a
+dedicated speech-to-text model.
+
 Draft the notes yourself from the transcript (do **not** call `draft_notes` unless the transcript is longer than ~3 hours; then use it as a starting point). Use exactly this structure:
 
 ```

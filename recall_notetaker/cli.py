@@ -10,6 +10,8 @@
   notetaker cancel <bot-id>               delete a scheduled bot
   notetaker show-image <bot-id>           push the avatar to a live bot's camera
   notetaker sync-calendar events.json     book bots for upcoming calendar meetings
+  notetaker recording <bot-id>            download the meeting audio and video
+  notetaker retranscribe <bot-id>         transcribe again in Lithuanian (--language)
 """
 
 from __future__ import annotations
@@ -24,7 +26,7 @@ from .config import REGIONS, Settings
 from .notes import MeetingContext, generate_notes, render_markdown, slugify
 from .recall import BotSummary, RecallClient, RecallError, detect_region, latest_status
 from .state import BotState
-from .transcript import to_paragraphs, to_segments
+from .transcript import render_text, to_paragraphs, to_segments
 
 
 def _print(*a: object) -> None:
@@ -169,6 +171,34 @@ def cmd_sync_calendar(args: argparse.Namespace) -> int:
     return 1 if report["errors"] else 0
 
 
+def cmd_recording(args: argparse.Namespace) -> int:
+    settings = Settings.from_env()
+    client = RecallClient(settings)
+    bot = client.get_bot(args.bot_id)
+    urls = client.media_urls(bot)
+    if not urls:
+        _print("no finished recording media for this bot yet")
+        return 1
+    started = _started_at(bot) or datetime.now(timezone.utc)
+    out = Path(args.out) if args.out else settings.notes_dir
+    for ext, url in urls.items():
+        print(client.download(url, out / f"{started.strftime('%Y-%m-%d-%H%M')}-{args.bot_id[:8]}.{ext}"))
+    return 0
+
+
+def cmd_retranscribe(args: argparse.Namespace) -> int:
+    settings = Settings.from_env()
+    client = RecallClient(settings)
+    bot = client.get_bot(args.bot_id)
+    res = client.retranscribe(bot, args.language, max_wait_seconds=args.wait,
+                              sleep=__import__("time").sleep)
+    if res["words"] is None:
+        _print(f"still processing; transcript id {res['transcript_id']}")
+        return 2
+    print(render_text(to_paragraphs(to_segments(res["words"]))))
+    return 0
+
+
 def cmd_cancel(args: argparse.Namespace) -> int:
     settings = Settings.from_env()
     RecallClient(settings).delete_bot(args.bot_id)
@@ -226,6 +256,17 @@ def build_parser() -> argparse.ArgumentParser:
     sc.add_argument("--hours", type=float, default=30, help="look-ahead window (default 30)")
     sc.add_argument("--dry-run", action="store_true", help="report what would change, change nothing")
     sc.set_defaults(fn=cmd_sync_calendar)
+
+    rc = sub.add_parser("recording", help="download the meeting audio (mp3) and video (mp4)")
+    rc.add_argument("bot_id")
+    rc.add_argument("--out", help="folder (default NOTES_DIR)")
+    rc.set_defaults(fn=cmd_recording)
+
+    rt = sub.add_parser("retranscribe", help="transcribe a finished meeting again in another language")
+    rt.add_argument("bot_id")
+    rt.add_argument("--language", default="lt", help="language code, e.g. lt, en, ru, nl (default lt)")
+    rt.add_argument("--wait", type=float, default=600, help="seconds to wait (default 600)")
+    rt.set_defaults(fn=cmd_retranscribe)
 
     c = sub.add_parser("cancel")
     c.add_argument("bot_id")
