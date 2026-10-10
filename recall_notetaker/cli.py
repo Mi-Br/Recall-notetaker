@@ -9,6 +9,7 @@
   notetaker list                          recent bots
   notetaker cancel <bot-id>               delete a scheduled bot
   notetaker show-image <bot-id>           push the avatar to a live bot's camera
+  notetaker sync-calendar events.json     book bots for upcoming calendar meetings
 """
 
 from __future__ import annotations
@@ -158,6 +159,16 @@ def cmd_show_image(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_sync_calendar(args: argparse.Namespace) -> int:
+    from .calendar_sync import sync
+    settings = Settings.from_env()
+    data = json.loads(Path(args.events).read_text() if args.events != "-" else sys.stdin.read())
+    calendars = data.get("calendars", data)
+    report = sync(RecallClient(settings), calendars, hours=args.hours, dry_run=args.dry_run).as_dict()
+    print(json.dumps(report, indent=2, ensure_ascii=False))
+    return 1 if report["errors"] else 0
+
+
 def cmd_cancel(args: argparse.Namespace) -> int:
     settings = Settings.from_env()
     RecallClient(settings).delete_bot(args.bot_id)
@@ -209,6 +220,12 @@ def build_parser() -> argparse.ArgumentParser:
     si.add_argument("bot_id")
     si.add_argument("--image", help="path to a 1280x720 JPEG (default BOT_IMAGE / assets/bot-avatar.jpg)")
     si.set_defaults(fn=cmd_show_image)
+
+    sc = sub.add_parser("sync-calendar", help="book/move/cancel bots for upcoming calendar meetings")
+    sc.add_argument("events", help='JSON file ({"calendars": {name: [events]}}) or - for stdin')
+    sc.add_argument("--hours", type=float, default=30, help="look-ahead window (default 30)")
+    sc.add_argument("--dry-run", action="store_true", help="report what would change, change nothing")
+    sc.set_defaults(fn=cmd_sync_calendar)
 
     c = sub.add_parser("cancel")
     c.add_argument("bot_id")
