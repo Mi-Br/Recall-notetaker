@@ -93,3 +93,29 @@ def test_detect_region():
 
     assert detect_region("k", ["us-east-1", "eu-central-1"], transport=httpx.MockTransport(handler)) == "eu-central-1"
     assert detect_region("k", ["us-east-1"], transport=httpx.MockTransport(handler)) is None
+
+
+def test_network_secret_mode_sends_no_auth_header_and_hints_on_401(monkeypatch):
+    monkeypatch.setenv("CLAUDE_CODE_REMOTE", "true")
+    monkeypatch.delenv("RECALL_API_KEY", raising=False)
+    monkeypatch.setattr("recall_notetaker.config.load_dotenv", lambda: None)
+    settings = Settings.from_env()  # must not raise without a key in cloud sessions
+    assert settings.recall_api_key == ""
+    seen = {}
+
+    def handler(request):
+        seen["auth"] = request.headers.get("Authorization")
+        return httpx.Response(401, json={"detail": "Authentication credentials were not provided."})
+
+    client = RecallClient(settings, transport=httpx.MockTransport(handler))
+    with pytest.raises(RecallError, match="prefix 'Token'"):
+        client.list_bots()
+    assert seen["auth"] is None  # the proxy adds it; we must not send an empty "Token "
+
+
+def test_key_required_outside_cloud(monkeypatch):
+    monkeypatch.delenv("CLAUDE_CODE_REMOTE", raising=False)
+    monkeypatch.delenv("RECALL_API_KEY", raising=False)
+    monkeypatch.setattr("recall_notetaker.config.load_dotenv", lambda: None)
+    with pytest.raises(SystemExit, match="RECALL_API_KEY is not set"):
+        Settings.from_env()

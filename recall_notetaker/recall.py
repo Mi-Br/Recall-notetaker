@@ -94,13 +94,13 @@ def participants_download_url(bot: dict[str, Any]) -> str | None:
 class RecallClient:
     def __init__(self, settings: Settings, transport: httpx.BaseTransport | None = None):
         self.settings = settings
+        headers = {"Accept": "application/json", "Content-Type": "application/json"}
+        if settings.recall_api_key:
+            headers["Authorization"] = f"Token {settings.recall_api_key}"
+        # else: a Claude Code network secret adds "Authorization: Token <key>" at the proxy.
         self._http = httpx.Client(
             base_url=settings.recall_base_url,
-            headers={
-                "Authorization": f"Token {settings.recall_api_key}",
-                "Accept": "application/json",
-                "Content-Type": "application/json",
-            },
+            headers=headers,
             timeout=30,
             transport=transport,
         )
@@ -112,7 +112,12 @@ class RecallClient:
     def _request(self, method: str, path: str, **kw: Any) -> Any:
         r = self._http.request(method, path, **kw)
         if r.status_code >= 400:
-            raise RecallError(f"{method} {path} -> {r.status_code}: {r.text[:500]}")
+            hint = ""
+            if r.status_code == 401 and not self.settings.recall_api_key:
+                hint = (" | No RECALL_API_KEY in this session, so the key must come from a network secret: "
+                        "check it exists on this environment, lists *.recall.ai, and uses header "
+                        "Authorization with prefix 'Token' (not 'Bearer'). Also check RECALL_REGION.")
+            raise RecallError(f"{method} {path} -> {r.status_code}: {r.text[:500]}{hint}")
         if r.status_code == 204 or not r.content:
             return None
         return r.json()
@@ -245,8 +250,8 @@ class RecallClient:
 
 def detect_region(api_key: str, regions: Iterable[str], transport: httpx.BaseTransport | None = None) -> str | None:
     """Try List Bots in each region; the first 200 wins."""
-    with httpx.Client(timeout=15, transport=transport,
-                      headers={"Authorization": f"Token {api_key}"}) as http:
+    headers = {"Authorization": f"Token {api_key}"} if api_key else {}
+    with httpx.Client(timeout=15, transport=transport, headers=headers) as http:
         for region in regions:
             try:
                 r = http.get(f"https://{region}.recall.ai/api/v1/bot/", params={"limit": 1})

@@ -11,6 +11,11 @@ from dotenv import load_dotenv
 REGIONS = ("us-east-1", "us-west-2", "eu-central-1", "ap-northeast-1")
 
 
+def proxy_injects_auth() -> bool:
+    """True in Claude Code cloud sessions, where a network secret can supply the Recall key."""
+    return os.getenv("CLAUDE_CODE_REMOTE") == "true"
+
+
 def _int(name: str, default: int) -> int:
     raw = os.getenv(name)
     return int(raw) if raw else default
@@ -40,7 +45,9 @@ class Settings:
     def from_env(cls, require_recall_key: bool = True) -> "Settings":
         load_dotenv()
         key = os.getenv("RECALL_API_KEY", "")
-        if require_recall_key and not key:
+        # In Claude Code cloud sessions the key is best stored as a *network secret*: the agent
+        # proxy adds the Authorization header on the way out and the session never sees the key.
+        if require_recall_key and not key and not proxy_injects_auth():
             raise SystemExit("RECALL_API_KEY is not set (copy .env.example to .env).")
         return cls(
             recall_api_key=key,
