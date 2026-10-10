@@ -138,12 +138,12 @@ def _context_for(bot: dict[str, Any], entry: dict[str, Any]) -> MeetingContext:
 
 @server.tool()
 @_surface_errors
-def join_meeting(meeting_url: str, bot_name: str | None = None, provider: str = "recallai_async",
+def join_meeting(meeting_url: str, bot_name: str | None = None, provider: str = "recallai_streaming",
                  calendar_title: str | None = None) -> dict[str, Any]:
     """Send the notetaker bot to a Google Meet (or Zoom/Teams) URL right now.
 
-    provider: recallai_async (default, best post-call transcript), recallai_streaming
-    (live), or meeting_captions (free; requires captions enabled in Meet).
+    provider: recallai_streaming (default, Recall's transcription) or meeting_captions
+    (free; requires captions enabled in Meet).
     Returns the bot id. The host must admit the bot from the waiting room.
     """
     bot = _c().create_bot(meeting_url, bot_name=bot_name, provider=provider)

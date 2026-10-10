@@ -16,6 +16,18 @@ def proxy_injects_auth() -> bool:
     return os.getenv("CLAUDE_CODE_REMOTE") == "true"
 
 
+DEFAULT_BOT_IMAGE = Path(__file__).resolve().parent.parent / "assets" / "bot-avatar.jpg"
+
+
+def _bot_image() -> Path | None:
+    """BOT_IMAGE=<path to .jpg>, BOT_IMAGE=none to disable, unset = bundled avatar if present."""
+    raw = os.getenv("BOT_IMAGE", "").strip()
+    if raw.lower() in ("none", "off", "false", "0"):
+        return None
+    path = Path(raw) if raw else DEFAULT_BOT_IMAGE
+    return path if path.is_file() else None
+
+
 def _int(name: str, default: int) -> int:
     raw = os.getenv(name)
     return int(raw) if raw else default
@@ -32,6 +44,7 @@ class Settings:
     waiting_room_timeout: int = 600
     noone_joined_timeout: int = 600
     everyone_left_timeout: int = 30
+    bot_image: Path | None = None  # JPEG shown as the bot's camera tile; None = blank tile
     notes_dir: Path = field(default_factory=lambda: Path("notes"))
     state_file: Path = field(default_factory=lambda: Path("state/bots.json"))
 
@@ -59,6 +72,7 @@ class Settings:
             waiting_room_timeout=_int("WAITING_ROOM_TIMEOUT", 600),
             noone_joined_timeout=_int("NOONE_JOINED_TIMEOUT", 600),
             everyone_left_timeout=_int("EVERYONE_LEFT_TIMEOUT", 30),
+            bot_image=_bot_image(),
             notes_dir=Path(os.getenv("NOTES_DIR", "notes")),
             state_file=Path(os.getenv("STATE_FILE", "state/bots.json")),
         )

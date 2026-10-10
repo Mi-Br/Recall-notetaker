@@ -13,6 +13,7 @@ Request shapes follow Recall's own sample repos; see docs/RECALL_API_NOTES.md.
 
 from __future__ import annotations
 
+import base64
 import time
 from dataclasses import dataclass
 from datetime import datetime
@@ -130,14 +131,15 @@ class RecallClient:
         *,
         join_at: datetime | None = None,
         bot_name: str | None = None,
-        provider: str = "recallai_async",
+        provider: str = "recallai_streaming",
         metadata: dict[str, str] | None = None,
         webhook_url: str | None = None,
     ) -> dict[str, Any]:
         """Assemble the Create Bot body.
 
-        provider: "recallai_async" (default, post-call), "recallai_streaming"
-                  (live) or "meeting_captions" (free, scrapes Meet captions).
+        provider: "recallai_streaming" (default, Recall's own engine) or "meeting_captions"
+                  (free, scrapes Meet captions). Recall rejects "recallai_async" here; post-call
+                  transcription is a separate step (create_async_transcript on the recording).
         """
         s = self.settings
         if provider == "meeting_captions":
@@ -145,10 +147,9 @@ class RecallClient:
         elif provider == "recallai_streaming":
             provider_cfg = {"recallai_streaming": {"language_code": s.transcript_language,
                                                    "mode": "prioritize_accuracy"}}
-        elif provider == "recallai_async":
-            provider_cfg = {"recallai_async": {"language_code": s.transcript_language}}
         else:
-            raise ValueError(f"unknown transcript provider {provider!r}")
+            raise ValueError(f"unknown transcript provider {provider!r} "
+                             "(use recallai_streaming or meeting_captions)")
 
         recording_config: dict[str, Any] = {
             "transcript": {"provider": provider_cfg},
@@ -172,6 +173,9 @@ class RecallClient:
             },
             "metadata": {"source": "recall-notetaker", **(metadata or {})},
         }
+        if s.bot_image is not None:
+            frame = {"kind": "jpeg", "b64_data": base64.b64encode(s.bot_image.read_bytes()).decode("ascii")}
+            body["automatic_video_output"] = {"in_call_recording": frame, "in_call_not_recording": frame}
         if join_at is not None:
             body["join_at"] = join_at.isoformat()
         return body

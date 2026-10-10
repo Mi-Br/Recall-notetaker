@@ -165,8 +165,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     def bot_opts(sp: argparse.ArgumentParser) -> None:
         sp.add_argument("--name", help="bot display name (default BOT_NAME)")
-        sp.add_argument("--provider", default="recallai_async",
-                        choices=["recallai_async", "recallai_streaming", "meeting_captions"])
+        sp.add_argument("--provider", default="recallai_streaming",
+                        choices=["recallai_streaming", "meeting_captions"])
 
     j = sub.add_parser("join", help="send the bot to a meeting now")
     j.add_argument("meeting_url")

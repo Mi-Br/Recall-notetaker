@@ -38,8 +38,9 @@ notetaker notes <bot-id>                           # regenerate notes (new promp
 notetaker cancel <bot-id>                          # delete a scheduled bot
 ```
 
-Transcript provider is `--provider recallai_async` by default; `meeting_captions` is the
-free option (needs captions on in Meet), `recallai_streaming` is for live use.
+Transcript provider is `--provider recallai_streaming` (Recall's engine) by default; `meeting_captions`
+is the free option (needs captions on in Meet). The bot shows `assets/bot-avatar.jpg` as its camera
+tile; set `BOT_IMAGE=<path to .jpg>` to change it or `BOT_IMAGE=none` for a blank tile.
 
 ## Prerequisites
 

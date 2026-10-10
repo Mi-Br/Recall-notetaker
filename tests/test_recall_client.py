@@ -39,7 +39,8 @@ def test_create_bot_payload_and_headers():
     body = seen["body"]
     assert body["bot_name"] == "Test Bot"
     assert body["join_at"] == "2026-09-12T12:00:00+00:00"
-    assert body["recording_config"]["transcript"]["provider"] == {"recallai_async": {"language_code": "en"}}
+    assert body["recording_config"]["transcript"]["provider"] == {
+        "recallai_streaming": {"language_code": "en", "mode": "prioritize_accuracy"}}
     assert body["automatic_leave"]["waiting_room_timeout"] == 123
     assert body["metadata"] == {"source": "recall-notetaker", "event_id": "ev1"}
 
@@ -48,8 +49,8 @@ def test_provider_variants():
     client = make_client(lambda r: httpx.Response(200, json={}))
     p = client.build_bot_payload("u", provider="meeting_captions")
     assert p["recording_config"]["transcript"]["provider"] == {"meeting_captions": {}}
-    p = client.build_bot_payload("u", provider="recallai_streaming")
-    assert "recallai_streaming" in p["recording_config"]["transcript"]["provider"]
+    with pytest.raises(ValueError):
+        client.build_bot_payload("u", provider="recallai_async")  # Recall rejects it at Create Bot
     with pytest.raises(ValueError):
         client.build_bot_payload("u", provider="nope")
 
@@ -119,3 +120,26 @@ def test_key_required_outside_cloud(monkeypatch):
     monkeypatch.setattr("recall_notetaker.config.load_dotenv", lambda: None)
     with pytest.raises(SystemExit, match="RECALL_API_KEY is not set"):
         Settings.from_env()
+
+
+def test_bot_image_is_sent_as_camera_tile(tmp_path):
+    img = tmp_path / "a.jpg"
+    img.write_bytes(b"\xff\xd8\xff\xe0fakejpeg")
+    settings = Settings(recall_api_key="k", bot_image=img)
+    body = RecallClient(settings).build_bot_payload("u")
+    frame = body["automatic_video_output"]["in_call_recording"]
+    assert frame["kind"] == "jpeg"
+    import base64
+    assert base64.b64decode(frame["b64_data"]) == img.read_bytes()
+    assert body["automatic_video_output"]["in_call_not_recording"] == frame
+    assert "automatic_video_output" not in RecallClient(Settings(recall_api_key="k")).build_bot_payload("u")
+
+
+def test_bot_image_env(monkeypatch, tmp_path):
+    from recall_notetaker.config import DEFAULT_BOT_IMAGE, _bot_image
+    monkeypatch.delenv("BOT_IMAGE", raising=False)
+    assert _bot_image() == (DEFAULT_BOT_IMAGE if DEFAULT_BOT_IMAGE.is_file() else None)
+    monkeypatch.setenv("BOT_IMAGE", "none")
+    assert _bot_image() is None
+    monkeypatch.setenv("BOT_IMAGE", str(tmp_path / "missing.jpg"))
+    assert _bot_image() is None

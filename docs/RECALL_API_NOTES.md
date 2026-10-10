@@ -19,7 +19,7 @@ must be confirmed on the first live run.
   "bot_name": "Michail's Notetaker",
   "join_at": "2026-09-12T12:00:00+00:00",
   "recording_config": {
-    "transcript": {"provider": {"recallai_async": {"language_code": "en"}}},
+    "transcript": {"provider": {"recallai_streaming": {"language_code": "en", "mode": "prioritize_accuracy"}}},
     "participant_events": {},
     "meeting_metadata": {},
     "start_recording_on": "participant_join",
@@ -40,10 +40,15 @@ must be confirmed on the first live run.
 * `join_at` omitted / < 10 min ahead → ad hoc bot joins immediately. ≥ 10 min ahead →
   scheduled bot (Recall guarantees on‑time join). Bots need boot + navigation time; set
   `join_at` 10–15 s early if exact timing matters.
-* Transcript providers seen in samples: `recallai_streaming` (`mode`:
-  `prioritize_accuracy` | `prioritize_low_latency`, `language_code`, `filter_profanity`),
-  `meeting_captions` (`{}`), `recallai_async` ⚠ (key name from docs search; confirm exact
-  options).
+* Transcript providers accepted by Create Bot (verified live 2026-10-10 from the 400 error):
+  `recallai_streaming` (`mode`: `prioritize_accuracy` | `prioritize_low_latency`, `language_code`,
+  `filter_profanity`), `meeting_captions` (`{}`), plus third-party streaming engines
+  (assembly_ai_*, deepgram_streaming, aws_transcribe_streaming, gladia_*, speechmatics_streaming, …).
+  **`recallai_async` is rejected here**; it is only valid for post-call transcription via
+  `POST /api/v1/recording/{id}/create_transcript/` (verified live: returns a transcript with
+  `status.code` → `done`, then `GET /api/v1/transcript/{id}/` → `data.download_url`).
+* `automatic_video_output.{in_call_recording,in_call_not_recording}` = `{"kind": "jpeg", "b64_data": …}`
+  shows a static image as the bot's camera tile.
 * `automatic_leave` defaults: `waiting_room_timeout` 1200, `noone_joined_timeout` 1200,
   `everyone_left_timeout` 2, `in_call_not_recording_timeout` 3600,
   `recording_permission_denied_timeout` 30 (seconds).

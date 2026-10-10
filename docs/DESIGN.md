@@ -62,8 +62,8 @@ Ways to remove the manual step, in order of cost:
 
 | Provider key | When | Cost (PAYG) | Notes |
 |---|---|---|---|
-| `recallai_async` | after the call | $0.15/h | Best accuracy for the money; diarized. **Default.** |
-| `recallai_streaming` | live during call | $0.15/h | Only needed for real‑time features (live notes, alerts). Not needed for post‑meeting notes. |
+| `recallai_async` | after the call | $0.15/h | Re-transcribe a finished recording only; Create Bot rejects it (verified live). |
+| `recallai_streaming` | live during call | $0.15/h | **Default.** The Recall engine Create Bot accepts. |
 | `meeting_captions` | live, scrapes Google Meet captions | free | Requires captions enabled in Meet; quality/diarization is what Google gives you. Good fallback / cost floor. |
 | Deepgram / AssemblyAI / etc. via Recall | either | their price, own key | Only if Recall's own engine disappoints. |
 
@@ -131,7 +131,7 @@ Bot request (see `recall_notetaker/recall.py`):
   "meeting_url": "https://meet.google.com/abc-defg-hij",
   "bot_name": "Michail's Notetaker",
   "recording_config": {
-    "transcript": { "provider": { "recallai_async": { "language_code": "en" } } },
+    "transcript": { "provider": { "recallai_streaming": { "language_code": "en", "mode": "prioritize_accuracy" } } },
     "participant_events": {},
     "meeting_metadata": {},
     "start_recording_on": "participant_join"
