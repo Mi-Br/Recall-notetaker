@@ -93,3 +93,15 @@ def test_errors_reach_the_model(monkeypatch, tmp_path):
         lambda r: httpx.Response(401, json={"detail": "Invalid token."}))))
     with pytest.raises(ToolError, match="401.*Invalid token"):
         srv.list_bots()
+
+
+def test_schedule_requires_timezone(wired):
+    from mcp.server.mcpserver.exceptions import ToolError
+
+    with pytest.raises(ToolError, match="no time zone"):
+        srv.schedule_meeting("https://meet.google.com/abc-defg-hij", "2026-10-12T10:00")
+    out = srv.schedule_meeting("https://meet.google.com/abc-defg-hij", "2026-10-12T10:00:00+02:00",
+                               calendar_title="Client call")
+    assert out["join_at"] == "2026-10-12T10:00:00+02:00"
+    assert wired["body"]["join_at"] == "2026-10-12T10:00:00+02:00"
+    assert srv._state().bots["new-bot"]["status"] == "scheduled"

@@ -157,13 +157,18 @@ def join_meeting(meeting_url: str, bot_name: str | None = None, provider: str = 
 @_surface_errors
 def schedule_meeting(meeting_url: str, join_at: str, bot_name: str | None = None,
                      calendar_title: str | None = None) -> dict[str, Any]:
-    """Schedule the bot to join at an ISO-8601 time (>= 10 minutes ahead for guaranteed timing).
+    """Schedule the bot to join at an ISO-8601 time WITH a UTC offset, e.g. 2026-10-12T10:00:00+02:00.
 
-    Naive timestamps are treated as the machine's local time.
+    Book it >= 10 minutes ahead for guaranteed timing; Recall then joins on its own, no
+    Claude session needed. Times without an offset are rejected because the server's clock
+    zone (UTC in cloud sessions) is rarely the user's: ask the user for their time zone.
     """
     when = datetime.fromisoformat(join_at)
     if when.tzinfo is None:
-        when = when.astimezone()
+        raise ValueError(
+            f"join_at {join_at!r} has no time zone. Ask the user for their time zone and pass an "
+            "offset, e.g. 2026-10-12T10:00:00+02:00 for Amsterdam summer time."
+        )
     bot = _c().create_bot(meeting_url, join_at=when, bot_name=bot_name)
     _state().record(bot["id"], meeting_url=meeting_url, join_at=when.isoformat(), status="scheduled",
                     calendar_title=calendar_title)
