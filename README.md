@@ -75,6 +75,9 @@ Then start a **new** session on this repo (settings only apply to new sessions) 
 /finish [bot-id]                                    # write up a call that already ended
 ```
 
+Opened locally instead, Claude Code asks once to trust the folder and approve the `notetaker`
+server; until then `claude mcp list` shows it as pending approval.
+
 The container is deleted when the session ends, so the `meet` command offers to commit the notes
 to the repo or copy them to Google Drive, Notion or email before you leave.
 
