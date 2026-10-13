@@ -85,6 +85,20 @@ Write the page in Notion-flavoured Markdown (to-dos as `- [ ]`, timestamps in ba
 meeting time as a date mention), and give the user the page link. Notes are in English even
 when the meeting was not.
 
+**Recap email from Angela (draft only).** If the Gmail tools are available, create a Gmail
+**draft** (never send it) for the user to review:
+- To: the other attendees (from the calendar invite or the transcript's participants; ask if
+  no addresses are known). Cc: `michail@werkzet.com`.
+- Subject: `Recap: <meeting title> <day month>`.
+- Body, short and friendly, signed "Angela, AI notetaker, Werkzet":
+  "Hi <names>, great discussion today…", then **A few things to keep in mind** (3–5 bullets of
+  the main discussion points, written for the client: no internal doubts, prices or risks
+  you would not say to them), then **Action items** (owner: task), then the line
+  "Michail, your personal Notion board is updated with the full notes. Let's get those
+  actions done this week."
+- Write it in the language the meeting was held in only if the user asks; English otherwise.
+- Provide both `htmlBody` and a plain-text `body`. Give the user the draft link.
+
 **Cloud sessions are temporary.** If the environment variable `CLAUDE_CODE_REMOTE` is `true` (Claude Code on the web), the container and the saved file disappear when the session ends. Tell the user that, and offer to keep the notes by one of:
 - committing the notes file to the repository and pushing it to the current branch (`notes/` is git-ignored, so use `git add -f`);
 - copying them into Google Drive, Notion or an email draft, if those tools are available in the session.
