@@ -82,7 +82,12 @@ under Werkzet → Meetings and Intakes (page `3f8128136ef3819b81b3faf8289317f5`)
   short Contact / Status section, then put the notes inside it;
 - other meetings go directly under Meetings and Intakes.
 Write the page in Notion-flavoured Markdown (to-dos as `- [ ]`, timestamps in backticks, the
-meeting time as a date mention), and give the user the page link. Notes are in English even
+meeting time as a date mention), and give the user the page link.
+Under the notes page also create a child page `Full transcript (<language>, machine)` with every
+turn as "`mm:ss` **Speaker:** text" (escape Notion's special characters in the text), and add a
+"Recording and transcript" section near the top of the notes linking that page and listing the
+Recall bot id and recording id (Recall's download links expire, so never paste them; say
+"download the recording for bot <id>" fetches fresh ones). Notes are in English even
 when the meeting was not.
 
 **Recap email from Angela (draft only).** If the Gmail tools are available, create a Gmail
