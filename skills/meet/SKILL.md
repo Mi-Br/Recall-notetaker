@@ -73,6 +73,18 @@ Before saving, re-read the transcript and check every line you wrote:
 
 Call `save_notes(bot_id, title, markdown)`. Reply with the file path, the Summary section, and the action items. Offer to answer questions about the meeting (you have the full transcript in context) or to reformat for Notion/email.
 
+**Notion is the default home for notes.** If the Notion tools are available, also save the
+final notes as a Notion page, titled `YYYY-MM-DD <short meeting title>`, in Michail's workspace
+under Werkzet → Meetings and Intakes (page `3f8128136ef3819b81b3faf8289317f5`):
+- meetings with a prospective or existing client go under Client intakes
+  (page `3f8128136ef3814c9ae1f0a76b28f7b4`) → that client's page. Search Client intakes for the
+  client first; if there is no page yet, create one titled `<Contact name> — <Company>` with a
+  short Contact / Status section, then put the notes inside it;
+- other meetings go directly under Meetings and Intakes.
+Write the page in Notion-flavoured Markdown (to-dos as `- [ ]`, timestamps in backticks, the
+meeting time as a date mention), and give the user the page link. Notes are in English even
+when the meeting was not.
+
 **Cloud sessions are temporary.** If the environment variable `CLAUDE_CODE_REMOTE` is `true` (Claude Code on the web), the container and the saved file disappear when the session ends. Tell the user that, and offer to keep the notes by one of:
 - committing the notes file to the repository and pushing it to the current branch (`notes/` is git-ignored, so use `git add -f`);
 - copying them into Google Drive, Notion or an email draft, if those tools are available in the session.
