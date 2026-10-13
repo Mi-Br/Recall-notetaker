@@ -81,6 +81,23 @@ under Werkzet → Meetings and Intakes (page `3f8128136ef3819b81b3faf8289317f5`)
   client first; if there is no page yet, create one titled `<Contact name> — <Company>` with a
   short Contact / Status section, then put the notes inside it;
 - other meetings go directly under Meetings and Intakes.
+
+**Client spaces take precedence.** Once a client has signed on they get a shared space, a
+top-level page named `<Client> × Werkzet` (e.g. Momentai × Werkzet, Profinanca × Werkzet) with
+Projektai, Darbai, Susitikimai and Medžiaga ir prieigos databases, written in the client's
+language. Search Notion for `× Werkzet` before falling back to Client intakes. If the client has
+a space:
+- create a Susitikimai entry (title, Data, Dalyviai, Susitarimai, Kiti žingsniai, Projektas,
+  Susiję darbai) written in the space's language, for the client to read;
+- put the English notes page (and its transcript child) inside that entry, introduced as
+  internal Werkzet notes;
+- add new action items as Darbai rows linked to the project, with Atsakingas set to the owner
+  and Būsena `Reikia iš kliento` for items the client owes;
+- the old Client intakes page for that client is only a pointer to the space; don't add notes
+  there.
+The space is shared with the client, so keep internal commentary (pricing doubts, opinions
+about the client) out of the Susitikimai entry and Darbai rows.
+
 Write the page in Notion-flavoured Markdown (to-dos as `- [ ]`, timestamps in backticks, the
 meeting time as a date mention), and give the user the page link.
 Under the notes page also create a child page `Full transcript (<language>, machine)` with every
